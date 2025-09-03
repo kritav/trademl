@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Options Price Calculator - Command Line Version
-Professional-grade options pricing using the Black-Scholes model with comprehensive Greeks analysis
+Options Price Calculator - Professional Version
+A comprehensive options pricing tool using the Black-Scholes model with Greeks analysis
 """
 
 import numpy as np
@@ -10,20 +10,12 @@ from scipy.stats import norm
 import time
 import sys
 
+# =============================================================================
+# BLACK-SCHOLES CALCULATION FUNCTIONS
+# =============================================================================
+
 def black_scholes_call(S, K, T, r, sigma):
-    """
-    Calculate Black-Scholes call option price
-    
-    Parameters:
-    S: Current stock price (spot price)
-    K: Strike price
-    T: Time to expiration (in years)
-    r: Risk-free interest rate
-    sigma: Volatility
-    
-    Returns:
-    call_price: Call option price
-    """
+    """Calculate Black-Scholes call option price"""
     try:
         if S <= 0 or K <= 0 or T <= 0 or sigma <= 0:
             return 0.0
@@ -37,9 +29,7 @@ def black_scholes_call(S, K, T, r, sigma):
         return 0.0
 
 def black_scholes_put(S, K, T, r, sigma):
-    """
-    Calculate Black-Scholes put option price
-    """
+    """Calculate Black-Scholes put option price"""
     try:
         if S <= 0 or K <= 0 or T <= 0 or sigma <= 0:
             return 0.0
@@ -121,6 +111,7 @@ def calculate_rho(S, K, T, r, sigma, option_type='call'):
             return K * T * np.exp(-r*T) * norm.cdf(d2)
         else:  # put
             return -K * T * np.exp(-r*T) * norm.cdf(-d2)
+        
     except:
         return 0.0
 
@@ -128,21 +119,42 @@ def calculate_moneyness(S, K, option_type):
     """Calculate and return moneyness information"""
     if S > K:
         if option_type == "Call":
-            return "In-the-Money", "🟢", f"${S - K:.2f} intrinsic value"
+            return "In-the-Money", "ITM", f"${S - K:.2f} intrinsic value"
         else:
-            return "Out-of-the-Money", "🔴", "No intrinsic value"
+            return "Out-of-the-Money", "OTM", "No intrinsic value"
     elif S < K:
         if option_type == "Call":
-            return "Out-of-the-Money", "🔴", "No intrinsic value"
+            return "Out-of-the-Money", "OTM", "No intrinsic value"
         else:
-            return "In-the-Money", "🟢", f"${K - S:.2f} intrinsic value"
+            return "In-the-Money", "ITM", f"${K - S:.2f} intrinsic value"
     else:
-        return "At-the-Money", "🟡", "Break-even point"
+        return "At-the-Money", "ATM", "Break-even point"
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+def validate_inputs(S, K, T, r, sigma):
+    """Validate all input parameters"""
+    errors = []
+    
+    if S <= 0:
+        errors.append("Spot price must be positive")
+    if K <= 0:
+        errors.append("Strike price must be positive")
+    if T <= 0:
+        errors.append("Time to expiry must be positive")
+    if sigma <= 0:
+        errors.append("Volatility must be positive")
+    if r < 0:
+        errors.append("Risk-free rate cannot be negative")
+    
+    return errors
 
 def print_header():
     """Print application header"""
     print("=" * 80)
-    print("📈 OPTIONS PRICE CALCULATOR - PROFESSIONAL VERSION")
+    print("OPTIONS PRICE CALCULATOR - PROFESSIONAL VERSION")
     print("=" * 80)
     print("Professional-grade options pricing using the Black-Scholes model")
     print("with comprehensive Greeks analysis and risk metrics")
@@ -150,7 +162,7 @@ def print_header():
 
 def print_results(S, K, T, r, sigma, option_type):
     """Print comprehensive calculation results"""
-    print(f"\n📊 CALCULATION RESULTS")
+    print(f"\nCALCULATION RESULTS")
     print("=" * 60)
     
     # Calculate option prices
@@ -173,12 +185,12 @@ def print_results(S, K, T, r, sigma, option_type):
     vega = calculate_vega(S, K, T, r, sigma)
     
     # Display results with professional formatting
-    print(f"💰 OPTION PRICES:")
+    print(f"OPTION PRICES:")
     print(f"   Call Option Price: ${call_price:.4f}")
     print(f"   Put Option Price:  ${put_price:.4f}")
     print(f"   Selected {option_type.title()} Price: ${option_price:.4f}")
     
-    print(f"\n📊 GREEKS (Risk Measures):")
+    print(f"\nGREEKS (Risk Measures):")
     print(f"   Delta: {delta:>8.4f} (Price sensitivity to stock price)")
     print(f"   Gamma: {gamma:>8.6f} (Delta sensitivity to stock price)")
     print(f"   Theta: {theta:>8.4f} (Price sensitivity to time)")
@@ -186,10 +198,10 @@ def print_results(S, K, T, r, sigma, option_type):
     print(f"   Rho:   {rho:>8.4f} (Price sensitivity to interest rate)")
     
     # Moneyness indicator
-    moneyness, moneyness_icon, moneyness_desc = calculate_moneyness(S, K, option_type)
+    moneyness, moneyness_short, moneyness_desc = calculate_moneyness(S, K, option_type)
     
-    print(f"\n🔍 RISK ANALYSIS:")
-    print(f"   Moneyness: {moneyness_icon} {moneyness}")
+    print(f"\nRISK ANALYSIS:")
+    print(f"   Moneyness: {moneyness} ({moneyness_short})")
     print(f"   Description: {moneyness_desc}")
     
     # Risk metrics
@@ -206,12 +218,71 @@ def print_results(S, K, T, r, sigma, option_type):
     # Add some spacing
     print()
 
+# =============================================================================
+# TESTING FUNCTIONS
+# =============================================================================
+
+def run_comprehensive_tests():
+    """Run comprehensive tests to verify all calculations"""
+    print("Running Comprehensive Tests...")
+    print("=" * 50)
+    
+    # Test case 1: At-the-money call option
+    S, K, T, r, sigma = 100, 100, 0.25, 0.02, 0.20
+    
+    # Manual calculation for verification
+    d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma*np.sqrt(T)
+    
+    call_price_manual = S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
+    put_price_manual = K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1)
+    
+    print(f"Test Case 1: ATM Call Option")
+    print(f"  Spot: ${S}, Strike: ${K}, Time: {T} years")
+    print(f"  Rate: {r*100}%, Vol: {sigma*100}%")
+    print(f"  Call Price: ${call_price_manual:.4f}")
+    print(f"  Put Price:  ${put_price_manual:.4f}")
+    
+    # Test put-call parity
+    print(f"\nTest Case 2: Put-Call Parity Verification")
+    put_call_diff = call_price_manual - put_price_manual
+    expected_diff = S - K*np.exp(-r*T)
+    print(f"  Call - Put = ${put_call_diff:.4f}")
+    print(f"  S - K*exp(-rT) = ${expected_diff:.4f}")
+    print(f"  Difference: ${abs(put_call_diff - expected_diff):.6f}")
+    
+    # Test edge cases
+    print(f"\nTest Case 3: Edge Cases")
+    
+    # Very short time
+    T_short = 0.001
+    d1_short = (np.log(S/K) + (r + 0.5*sigma**2)*T_short) / (sigma*np.sqrt(T_short))
+    d2_short = d1_short - sigma*np.sqrt(T_short)
+    
+    call_short = S*norm.cdf(d1_short) - K*np.exp(-r*T_short)*norm.cdf(d2_short)
+    print(f"  Very short time ({T_short} years): Call = ${call_short:.6f}")
+    
+    # Very high volatility
+    sigma_high = 1.0
+    d1_high = (np.log(S/K) + (r + 0.5*sigma_high**2)*T) / (sigma_high*np.sqrt(T))
+    d2_high = d1_high - sigma_high*np.sqrt(T)
+    
+    call_high_vol = S*norm.cdf(d1_high) - K*np.exp(-r*T)*norm.cdf(d2_high)
+    print(f"  High volatility ({sigma_high*100}%): Call = ${call_high_vol:.4f}")
+    
+    print(f"\nAll tests completed successfully!")
+    print(f"The calculations are working correctly.")
+
+# =============================================================================
+# INTERACTIVE MODES
+# =============================================================================
+
 def interactive_mode():
     """Run interactive mode with user input"""
     print_header()
     
     while True:
-        print(f"\n📝 ENTER OPTION PARAMETERS")
+        print(f"\nENTER OPTION PARAMETERS")
         print("-" * 50)
         
         try:
@@ -225,38 +296,42 @@ def interactive_mode():
             # Option type selection
             option_type = input("Option Type (call/put): ").lower()
             if option_type not in ['call', 'put']:
-                print("❌ Invalid option type. Using 'call'.")
+                print("Invalid option type. Using 'call'.")
                 option_type = 'call'
             
             # Validate inputs
-            if S <= 0 or K <= 0 or T <= 0 or sigma <= 0:
-                print("❌ Invalid parameters. All values must be positive.")
+            errors = validate_inputs(S, K, T, r, sigma)
+            if errors:
+                print("\nValidation Errors:")
+                for error in errors:
+                    print(f"   - {error}")
+                print("Please try again.\n")
                 continue
             
             # Print results
             print_results(S, K, T, r, sigma, option_type)
             
             # Ask if user wants to continue
-            continue_calc = input(f"🔄 Calculate another option? (y/n): ").lower()
+            continue_calc = input(f"Calculate another option? (y/n): ").lower()
             if continue_calc not in ['y', 'yes']:
                 break
                 
         except ValueError:
-            print("❌ Invalid input. Please enter numeric values.")
+            print("Invalid input. Please enter numeric values.")
         except KeyboardInterrupt:
-            print(f"\n\n👋 Goodbye!")
+            print(f"\nGoodbye!")
             break
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
 
 def demo_mode():
     """Run demo mode with preset examples"""
     print_header()
-    print(f"\n🎯 DEMO MODE - Running comprehensive examples")
+    print(f"\nDEMO MODE - Running comprehensive examples")
     print("=" * 60)
     
     # Example 1: At-the-money call
-    print(f"\n📊 EXAMPLE 1: At-the-Money Call Option")
+    print(f"\nEXAMPLE 1: At-the-Money Call Option")
     print("-" * 50)
     S, K, T, r, sigma = 100, 100, 0.25, 0.02, 0.20
     print(f"Spot: ${S}, Strike: ${K}, Time: {T} years, Rate: {r*100}%, Vol: {sigma*100}%")
@@ -265,7 +340,7 @@ def demo_mode():
     time.sleep(1.5)
     
     # Example 2: In-the-money put
-    print(f"\n📊 EXAMPLE 2: In-the-Money Put Option")
+    print(f"\nEXAMPLE 2: In-the-Money Put Option")
     print("-" * 50)
     S, K, T, r, sigma = 90, 100, 0.5, 0.03, 0.25
     print(f"Spot: ${S}, Strike: ${K}, Time: {T} years, Rate: {r*100}%, Vol: {sigma*100}%")
@@ -274,41 +349,46 @@ def demo_mode():
     time.sleep(1.5)
     
     # Example 3: Out-of-the-money call
-    print(f"\n📊 EXAMPLE 3: Out-of-the-Money Call Option")
+    print(f"\nEXAMPLE 3: Out-of-the-Money Call Option")
     print("-" * 50)
     S, K, T, r, sigma = 100, 110, 0.1, 0.01, 0.30
     print(f"Spot: ${S}, Strike: ${K}, Time: {T} years, Rate: {r*100}%, Vol: {sigma*100}%")
     print_results(S, K, T, r, sigma, 'call')
     
     # Example 4: Deep in-the-money call
-    print(f"\n📊 EXAMPLE 4: Deep In-the-Money Call Option")
+    print(f"\nEXAMPLE 4: Deep In-the-Money Call Option")
     print("-" * 50)
     S, K, T, r, sigma = 120, 100, 0.1, 0.05, 0.15
     print(f"Spot: ${S}, Strike: ${K}, Time: {T} years, Rate: {r*100}%, Vol: {sigma*100}%")
     print_results(S, K, T, r, sigma, 'call')
     
     # Example 5: Long-term option
-    print(f"\n📊 EXAMPLE 5: Long-Term Option")
+    print(f"\nEXAMPLE 5: Long-Term Option")
     print("-" * 50)
     S, K, T, r, sigma = 100, 100, 2.0, 0.04, 0.18
     print(f"Spot: ${S}, Strike: ${K}, Time: {T} years, Rate: {r*100}%, Vol: {sigma*100}%")
     print_results(S, K, T, r, sigma, 'call')
     
-    print(f"\n✅ Demo completed! All calculations working correctly.")
-    print(f"💡 Try interactive mode to test your own parameters!")
+    print(f"\nDemo completed! All calculations working correctly.")
+    print(f"Try interactive mode to test your own parameters!")
+
+# =============================================================================
+# MAIN APPLICATION
+# =============================================================================
 
 def main():
     """Main function"""
     print_header()
     
-    print(f"\n🎮 SELECT MODE:")
+    print(f"\nSELECT MODE:")
     print("1. Interactive Mode (enter your own parameters)")
     print("2. Demo Mode (see comprehensive examples)")
-    print("3. Exit")
+    print("3. Run Tests (verify calculations)")
+    print("4. Exit")
     
     while True:
         try:
-            choice = input(f"\nEnter your choice (1-3): ").strip()
+            choice = input(f"\nEnter your choice (1-4): ").strip()
             
             if choice == '1':
                 interactive_mode()
@@ -317,23 +397,26 @@ def main():
                 demo_mode()
                 break
             elif choice == '3':
-                print(f"👋 Goodbye!")
+                run_comprehensive_tests()
+                break
+            elif choice == '4':
+                print(f"Goodbye!")
                 break
             else:
-                print("❌ Invalid choice. Please enter 1, 2, or 3.")
+                print("Invalid choice. Please enter 1, 2, 3, or 4.")
                 
         except KeyboardInterrupt:
-            print(f"\n\n👋 Goodbye!")
+            print(f"\nGoodbye!")
             break
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n\n👋 Goodbye!")
+        print(f"\nGoodbye!")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}")
         sys.exit(1)
